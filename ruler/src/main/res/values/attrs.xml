@@ -4,6 +4,7 @@
         <attr name="textColor" format="color"/>
         <attr name="textSize" format="dimension"/>
         <attr name="lineColor" format="color"/>
+        <attr name="lineIndicateColor" format="color"/>
         <attr name="lineSpaceWidth" format="dimension"/>
         <attr name="lineWidth" format="dimension"/>
         <attr name="lineMaxHeight" format="dimension"/>

@@ -25,6 +25,7 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
     private var mTextSize = 30f //  //尺子刻度下方数字 大小
 
     private var mLineColor = Color.GRAY // 刻度的颜色
+    private var mLineIndicateColor = Color.BLUE // 刻度的颜色
     private var mLineSpaceWidth = 25f //尺子刻度两条线之间的距离
     private var mLineWidth = 2f //尺子刻度两条线之间的距离
     private var mLineMaxHeight = 100f //尺子刻度分为3中不同的高度。 mLineMaxHeight表示最长的那根(也就是 10的倍数时的高度)
@@ -40,8 +41,8 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
     private var mPerValue = 0.1f // 最小单位  如 1:表示 每2条刻度差为1.   0.1:表示 每2条刻度差为0.1
 
     private var mTextHeight = 40f // 文字的高度
-    var mTextPaint: Paint // 尺子刻度下方数字(每隔10个出现的数值)
-    var mLinePaint: Paint // 尺子刻度
+    private var mTextPaint: Paint // 尺子刻度下方数字(每隔10个出现的数值)
+    private var mLinePaint: Paint // 尺子刻度
     private var mWidth = 0
     private var mHeight = 0
     private var mTotalLine = 0 //共有多少条刻度
@@ -58,6 +59,7 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         mTextSize = typedArray.getDimension(R.styleable.RulerView_textSize, 30f)
 
         mLineColor = typedArray.getColor(R.styleable.RulerView_lineColor, Color.GRAY)
+        mLineIndicateColor = typedArray.getColor(R.styleable.RulerView_lineIndicateColor, Color.BLUE)
         mLineSpaceWidth = typedArray.getDimension(R.styleable.RulerView_lineSpaceWidth, 25f)
         mLineWidth = typedArray.getDimension(R.styleable.RulerView_lineWidth, 2f)
         mLineMaxHeight = typedArray.getDimension(R.styleable.RulerView_lineMaxHeight, 100f)
@@ -84,7 +86,7 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
 
         mVelocityTracker = VelocityTracker.obtain()
 
-        setValue(2015f, 1990f, 2020f, 1f)
+        setValue(2015f, 1990f, 2020f, 0.1f)
     }
 
     /**
@@ -124,7 +126,27 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
+        drawLine(canvas)
+        drawLineIndicate(canvas)
+    }
 
+    /**
+     * 绘制指示线
+     */
+    private fun drawLineIndicate(canvas: Canvas?) {
+//        mLinePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+//        mLinePaint.strokeWidth = mLineWidth
+//        mLinePaint.color = mLineIndicateColor
+//        canvas?.drawLine((mWidth / 2).toFloat(), mHeight, (mWidth / 2).toFloat(), if (isTop) mHeight - indicateHeight else indicateHeight, lPaint)
+    }
+
+    /**
+     * 绘制刻度线
+     */
+    private fun drawLine(canvas: Canvas?) {
+        mLinePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+        mLinePaint.strokeWidth = mLineWidth
+        mLinePaint.color = mLineColor
         var left: Float
         var height: Float
         var value: String
@@ -160,7 +182,6 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
                         height + mTextMarginTop + mTextHeight, mTextPaint)
             }
         }
-
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
@@ -183,6 +204,7 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
             MotionEvent.ACTION_CANCEL -> {
                 computeMoveEnd()
                 computeVelocityTracker()
+                return false
             }
         }
         mLastX = x!!
@@ -209,10 +231,11 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
     }
 
     private fun notifyValueChange() {
-        if (mListener != null){
+        if (mListener != null) {
             mListener?.onValueChanged(mSelectorValue)
         }
     }
+
     /**
      * 滑动结束后，如果指针在两条刻度之间时，改变mOffset 让指针正好在刻度上。
      */
@@ -233,21 +256,34 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
 
     private fun computeVelocityTracker() {
         mVelocityTracker.computeCurrentVelocity(1000) //代表 1秒内运动了多少像素
-        var xVelocity = mVelocityTracker.xVelocity
-        if (xVelocity > mMinFlingVelocity){
+        val xVelocity = mVelocityTracker.xVelocity
+        if (Math.abs(xVelocity) > mMinFlingVelocity) {
             mScroller.fling(0, 0, xVelocity.toInt(), 0, Integer.MIN_VALUE, Integer.MAX_VALUE, 0, 0)
         }
     }
 
-    fun setOnValueChangedListener(listener: OnValueChangedListener){
+    fun setOnValueChangedListener(listener: OnValueChangedListener) {
         mListener = listener
     }
 
     /**
      *  滑动后的回调
      */
-    interface OnValueChangedListener{
+    interface OnValueChangedListener {
         fun onValueChanged(value: Float)
     }
 
+    override fun computeScroll() {
+        super.computeScroll()
+        if (mScroller.computeScrollOffset()) { // 滑动还没有结束 the animation is not yet finished.
+            if (mScroller.currX == mScroller.finalX) {
+                computeMoveEnd()
+            } else {
+                val x = mScroller.currX
+                mMove = mLastX - x
+                changeMoveAndValue()
+                mLastX = x
+            }
+        }
+    }
 }
