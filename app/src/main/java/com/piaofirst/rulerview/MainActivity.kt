@@ -20,5 +20,11 @@ class MainActivity : AppCompatActivity() {
                 text.text = value.toString()
             }
         })
+        rulerView2.setOnValueChangedListener(object : RulerView.OnValueChangedListener{
+            override fun onValueChanged(value: Float) {
+                text2.text = value.toString()
+            }
+
+        })
     }
 }

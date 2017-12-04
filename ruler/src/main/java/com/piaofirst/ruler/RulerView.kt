@@ -5,7 +5,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.VelocityTracker
 import android.view.View
@@ -125,10 +124,10 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         textMarginTop = typedArray.getDimension(R.styleable.RulerView_textMarginTop, textMarginTop)
 
         alphaEnable = typedArray.getBoolean(R.styleable.RulerView_alphaEnable, false)
-        minValue = typedArray.getDimension(R.styleable.RulerView_minValue, minValue)
-        maxValue = typedArray.getDimension(R.styleable.RulerView_minValue, maxValue)
-        selectorValue = typedArray.getDimension(R.styleable.RulerView_minValue, selectorValue)
-        perValue = typedArray.getDimension(R.styleable.RulerView_minValue, perValue)
+        minValue = typedArray.getFloat(R.styleable.RulerView_minValue, minValue)
+        maxValue = typedArray.getFloat(R.styleable.RulerView_maxValue, maxValue)
+        selectorValue = typedArray.getFloat(R.styleable.RulerView_selectorValue, selectorValue)
+        perValue = typedArray.getFloat(R.styleable.RulerView_perValue, perValue)
 
         minFlingVelocity = ViewConfiguration.get(context).scaledMinimumFlingVelocity
 
@@ -142,6 +141,11 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         mLinePaint.color = lineColor
 
         mVelocityTracker = VelocityTracker.obtain()
+
+        mTotalLine = ((maxValue - minValue) / perValue + 1).toInt()
+        mMaxOffset = (-(mTotalLine - 1) * lineSpaceWidth).toInt()
+        mOffset = (minValue - selectorValue) / perValue * lineSpaceWidth
+        visibility = VISIBLE
     }
 
     /**
