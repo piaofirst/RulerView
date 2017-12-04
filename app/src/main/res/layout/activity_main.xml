@@ -7,14 +7,17 @@
     tools:context="com.piaofirst.rulerview.MainActivity">
 
     <TextView
+        android:id="@+id/text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
         android:text="Hello World!" />
 
     <com.piaofirst.ruler.RulerView
         android:id="@+id/rulerView"
         android:layout_width="match_parent"
         android:layout_height="58dp"
+        android:layout_marginTop="10dp"
         android:layout_gravity="center" />
 
 </LinearLayout>

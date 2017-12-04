@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.VelocityTracker
 import android.view.View
@@ -18,31 +19,86 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
     : View(context, attrs, defStyle) {
 
     private var mScroller = Scroller(context)
-    private lateinit var mVelocityTracker: VelocityTracker
+    private var mVelocityTracker: VelocityTracker
 
-    private var mMinFlingVelocity = 50 // 一个fling最小的速度，单位是每秒多少像素
-    private var mTextColor = Color.BLACK // 文字的颜色
-    private var mTextSize = 30f //  //尺子刻度下方数字 大小
+    var minFlingVelocity = 50 // 一个fling最小的速度，单位是每秒多少像素
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var textColor = Color.BLACK // 文字的颜色
+        set(value) {
+            field = value
+            mTextPaint.color = value
+            invalidate()
+        }
+    var textSize = 30f //  //尺子刻度下方数字 大小
+        set(value) {
+            field = value
+            mTextPaint.textSize = value
+            invalidate()
+        }
 
-    private var mLineColor = Color.GRAY // 刻度的颜色
-    private var mLineIndicateColor = Color.BLUE // 刻度的颜色
-    private var mLineSpaceWidth = 25f //尺子刻度两条线之间的距离
-    private var mLineWidth = 2f //尺子刻度两条线之间的距离
-    private var mLineMaxHeight = 100f //尺子刻度分为3中不同的高度。 mLineMaxHeight表示最长的那根(也就是 10的倍数时的高度)
-    private var mLineMidHeight = 60f //尺子刻度分为3中不同的高度。mLineMidHeight  表示中间的高度(也就是 5  15 25 等时的高度)
-    private var mLineMinHeight = 40f //尺子刻度分为3中不同的高度。 mLineMinHeight 表示最短的那根(也就是 1 2 3 4 等时的高度)
-    private var mTextMarginTop = 10f // 数字距离刻度的高度
+    var lineColor = Color.GRAY // 刻度的颜色
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var mineIndicateColor = Color.BLUE // 刻度的颜色
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var lineIndicateCoordinate = 10f     //改变指示线的高度,数值越大高度越小
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var lineSpaceWidth = 25f //尺子刻度两条线之间的距离
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var lineWidth = 2f //尺子刻度两条线之间的距离
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var lineMaxHeight = 100f //尺子刻度分为3中不同的高度。 mLineMaxHeight表示最长的那根(也就是 10的倍数时的高度)
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var lineMidHeight = 60f //尺子刻度分为3中不同的高度。lineMidHeight  表示中间的高度(也就是 5  15 25 等时的高度)
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var lineMinHeight = 40f //尺子刻度分为3中不同的高度。 lineMinHeight 表示最短的那根(也就是 1 2 3 4 等时的高度)
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var textMarginTop = 10f // 数字距离刻度的高度
+        set(value) {
+            field = value
+            invalidate()
+        }
 
-    private var mAlphaEnable = false // 尺子两边是否需要做透明处理
+    var alphaEnable = false // 尺子两边是否需要做透明处理
+        set(value) {
+            field = value
+            invalidate()
+        }
 
-    private var mMinValue = 100f // 最小的数值
-    private var mMaxValue = 200f // 最大的数值
-    private var mSelectorValue = 50f // 未选择时 默认的值 滑动后表示当前中间指针正在指着的值
-    private var mPerValue = 0.1f // 最小单位  如 1:表示 每2条刻度差为1.   0.1:表示 每2条刻度差为0.1
+    private var minValue = 0f // 最小的数值
+    private var maxValue = 100f // 最大的数值
+    private var selectorValue = 50f // 未选择时 默认的值 滑动后表示当前中间指针正在指着的值
+    private var perValue = 0.1f // 最小单位  如 1:表示 每2条刻度差为1.   0.1:表示 每2条刻度差为0.1
 
     private var mTextHeight = 40f // 文字的高度
-    private var mTextPaint: Paint // 尺子刻度下方数字(每隔10个出现的数值)
-    private var mLinePaint: Paint // 尺子刻度
+    private var mTextPaint = Paint() // 尺子刻度下方数字(每隔10个出现的数值)
+    private var mLinePaint = Paint() // 尺子刻度
     private var mWidth = 0
     private var mHeight = 0
     private var mTotalLine = 0 //共有多少条刻度
@@ -55,38 +111,37 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
     init {
         var typedArray = context.obtainStyledAttributes(attrs, R.styleable.RulerView)
 
-        mTextColor = typedArray.getColor(R.styleable.RulerView_textColor, Color.BLACK)
-        mTextSize = typedArray.getDimension(R.styleable.RulerView_textSize, 30f)
+        textColor = typedArray.getColor(R.styleable.RulerView_textColor, textColor)
+        textSize = typedArray.getDimension(R.styleable.RulerView_textSize, textSize)
 
-        mLineColor = typedArray.getColor(R.styleable.RulerView_lineColor, Color.GRAY)
-        mLineIndicateColor = typedArray.getColor(R.styleable.RulerView_lineIndicateColor, Color.BLUE)
-        mLineSpaceWidth = typedArray.getDimension(R.styleable.RulerView_lineSpaceWidth, 25f)
-        mLineWidth = typedArray.getDimension(R.styleable.RulerView_lineWidth, 2f)
-        mLineMaxHeight = typedArray.getDimension(R.styleable.RulerView_lineMaxHeight, 100f)
-        mLineMidHeight = typedArray.getDimension(R.styleable.RulerView_lineMidHeight, 60f)
-        mLineMinHeight = typedArray.getDimension(R.styleable.RulerView_lineMinHeight, 40f)
-        mTextMarginTop = typedArray.getDimension(R.styleable.RulerView_textMarginTop, 10f)
+        lineColor = typedArray.getColor(R.styleable.RulerView_lineColor, lineColor)
+        mineIndicateColor = typedArray.getColor(R.styleable.RulerView_lineIndicateColor, mineIndicateColor)
+        lineIndicateCoordinate = typedArray.getDimension(R.styleable.RulerView_lineIndicateCoordinate, lineIndicateCoordinate)
+        lineSpaceWidth = typedArray.getDimension(R.styleable.RulerView_lineSpaceWidth, lineSpaceWidth)
+        lineWidth = typedArray.getDimension(R.styleable.RulerView_lineWidth, lineWidth)
+        lineMaxHeight = typedArray.getDimension(R.styleable.RulerView_lineMaxHeight, lineMaxHeight)
+        lineMidHeight = typedArray.getDimension(R.styleable.RulerView_lineMidHeight, lineMidHeight)
+        lineMinHeight = typedArray.getDimension(R.styleable.RulerView_lineMinHeight, lineMinHeight)
+        textMarginTop = typedArray.getDimension(R.styleable.RulerView_textMarginTop, textMarginTop)
 
-        mAlphaEnable = typedArray.getBoolean(R.styleable.RulerView_alphaEnable, false)
-        mMinValue = typedArray.getDimension(R.styleable.RulerView_minValue, 0f)
-        mMaxValue = typedArray.getDimension(R.styleable.RulerView_minValue, 100f)
-        mSelectorValue = typedArray.getDimension(R.styleable.RulerView_minValue, 0f)
-        mPerValue = typedArray.getDimension(R.styleable.RulerView_minValue, 0.1f)
+        alphaEnable = typedArray.getBoolean(R.styleable.RulerView_alphaEnable, false)
+        minValue = typedArray.getDimension(R.styleable.RulerView_minValue, minValue)
+        maxValue = typedArray.getDimension(R.styleable.RulerView_minValue, maxValue)
+        selectorValue = typedArray.getDimension(R.styleable.RulerView_minValue, selectorValue)
+        perValue = typedArray.getDimension(R.styleable.RulerView_minValue, perValue)
 
-        mMinFlingVelocity = ViewConfiguration.get(context).scaledMinimumFlingVelocity
+        minFlingVelocity = ViewConfiguration.get(context).scaledMinimumFlingVelocity
 
-        mTextPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-        mTextPaint.textSize = mTextSize
-        mTextPaint.color = mTextColor
+        mTextPaint.isAntiAlias = true
+        mTextPaint.textSize = textSize
+        mTextPaint.color = textColor
         mTextHeight = getFontHeight(mTextPaint)
 
-        mLinePaint = Paint(Paint.ANTI_ALIAS_FLAG)
-        mLinePaint.strokeWidth = mLineWidth
-        mLinePaint.color = mLineColor
+        mLinePaint.isAntiAlias = true
+        mLinePaint.strokeWidth = lineWidth
+        mLinePaint.color = lineColor
 
         mVelocityTracker = VelocityTracker.obtain()
-
-        setValue(2015f, 1990f, 2020f, 0.1f)
     }
 
     /**
@@ -104,14 +159,17 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
      * @param per 最小单位  如 1:表示 每2条刻度差为1. 0.1:表示 每2条刻度差为0.1
      */
     fun setValue(selectorValue: Float, minValue: Float, maxValue: Float, per: Float) {
-        this.mSelectorValue = selectorValue
-        this.mMinValue = minValue
-        this.mMaxValue = maxValue
-        this.mPerValue = per * 10.0f
-        this.mTotalLine = ((mMaxValue - mMinValue) * 10 / mPerValue + 1).toInt()
+        this.selectorValue = selectorValue
+        this.minValue = minValue
+        this.maxValue = maxValue
+//        this.perValue = per * 10.0f
+        this.perValue = per
+//        this.mTotalLine = ((this.maxValue - this.minValue) * 10 / perValue + 1).toInt()
+        this.mTotalLine = ((this.maxValue - this.minValue) / perValue + 1).toInt()
 
-        mMaxOffset = (-(mTotalLine - 1) * mLineSpaceWidth).toInt()
-        mOffset = (mMinValue - mSelectorValue) / mPerValue * mLineSpaceWidth * 10
+        mMaxOffset = (-(mTotalLine - 1) * lineSpaceWidth).toInt()
+//        mOffset = (this.minValue - this.selectorValue) / perValue * lineSpaceWidth * 10
+        mOffset = (this.minValue - this.selectorValue) / perValue * lineSpaceWidth
         invalidate()
         visibility = VISIBLE
     }
@@ -134,10 +192,11 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
      * 绘制指示线
      */
     private fun drawLineIndicate(canvas: Canvas?) {
-//        mLinePaint = Paint(Paint.ANTI_ALIAS_FLAG)
-//        mLinePaint.strokeWidth = mLineWidth
-//        mLinePaint.color = mLineIndicateColor
-//        canvas?.drawLine((mWidth / 2).toFloat(), mHeight, (mWidth / 2).toFloat(), if (isTop) mHeight - indicateHeight else indicateHeight, lPaint)
+        mLinePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+        mLinePaint.strokeWidth = lineWidth
+        mLinePaint.color = mineIndicateColor
+//        canvas?.drawLine((mWidth / 2).toFloat(), mHeight.toFloat(), (mWidth / 2).toFloat(), lineIndicateCoordinate, mLinePaint)
+        canvas?.drawLine((mWidth / 2).toFloat(), lineMaxHeight + textMarginTop * 2 + mTextHeight, (mWidth / 2).toFloat(), lineIndicateCoordinate, mLinePaint)
     }
 
     /**
@@ -145,8 +204,8 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
      */
     private fun drawLine(canvas: Canvas?) {
         mLinePaint = Paint(Paint.ANTI_ALIAS_FLAG)
-        mLinePaint.strokeWidth = mLineWidth
-        mLinePaint.color = mLineColor
+        mLinePaint.strokeWidth = lineWidth
+        mLinePaint.color = lineColor
         var left: Float
         var height: Float
         var value: String
@@ -154,19 +213,19 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         var scale: Float
         var srcPointX = mWidth / 2
         for (i in 0 until mTotalLine) {
-            left = srcPointX + mOffset + i * mLineSpaceWidth
+            left = srcPointX + mOffset + i * lineSpaceWidth
             //先画默认值在正中间，左右各一半的view。多余部分暂时不画(也就是从默认值在中间，画旁边左右的刻度线)
             if (left < 0 || left > mWidth) {
                 continue
             }
             if (i % 10 == 0) {
-                height = mLineMaxHeight
+                height = lineMaxHeight
             } else if (i % 5 == 0) {
-                height = mLineMidHeight
+                height = lineMidHeight
             } else {
-                height = mLineMinHeight
+                height = lineMinHeight
             }
-            if (mAlphaEnable) {
+            if (alphaEnable) {
                 scale = 1 - Math.abs(left - srcPointX) / srcPointX
                 alpha = (255 * scale * scale).toInt()
                 mLinePaint.alpha = alpha
@@ -174,12 +233,13 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
             canvas?.drawLine(left, 0f, left, height, mLinePaint)
             // 数值为10的倍数是 画数值
             if (i % 10 == 0) {
-                value = (mMinValue + i * mPerValue / 10).toInt().toString()
-                if (mAlphaEnable) {
+//                value = (minValue + i * perValue / 10).toInt().toString()
+                value = (minValue + i * perValue).toInt().toString()
+                if (alphaEnable) {
                     mTextPaint.alpha = alpha
                 }
                 canvas?.drawText(value, left - mTextPaint.measureText(value) / 2,
-                        height + mTextMarginTop + mTextHeight, mTextPaint)
+                        height + textMarginTop + mTextHeight, mTextPaint)
             }
         }
     }
@@ -225,14 +285,15 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
             mMove = 0
             mScroller.forceFinished(true)
         }
-        mSelectorValue = mMinValue + Math.round(mOffset) * 1.0f / mLineSpaceWidth * mPerValue / 10.0f
+//        selectorValue = minValue + Math.round(Math.abs(mOffset)) * 1.0f / lineSpaceWidth * perValue / 10.0f
+        selectorValue = minValue + Math.round(Math.abs(mOffset)) * 1.0f / lineSpaceWidth * perValue
         notifyValueChange()
         postInvalidate()
     }
 
     private fun notifyValueChange() {
         if (mListener != null) {
-            mListener?.onValueChanged(mSelectorValue)
+            mListener?.onValueChanged(selectorValue)
         }
     }
 
@@ -248,8 +309,10 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         }
         mLastX = 0
         mMove = 0
-        mSelectorValue = mMinValue + Math.round(Math.abs(mOffset) * 1.0f / mLineSpaceWidth) * mPerValue / 10.0f
-        mOffset = (mMinValue - mSelectorValue) * 10.0f / mPerValue * mLineSpaceWidth
+//        selectorValue = minValue + Math.round(Math.abs(mOffset) * 1.0f / lineSpaceWidth) * perValue / 10.0f
+        selectorValue = minValue + Math.round(Math.abs(mOffset) * 1.0f / lineSpaceWidth) * perValue
+//        mOffset = (minValue - selectorValue) * 10.0f / perValue * lineSpaceWidth
+        mOffset = (minValue - selectorValue) / perValue * lineSpaceWidth
         notifyValueChange()
         postInvalidate()
     }
@@ -257,7 +320,7 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
     private fun computeVelocityTracker() {
         mVelocityTracker.computeCurrentVelocity(1000) //代表 1秒内运动了多少像素
         val xVelocity = mVelocityTracker.xVelocity
-        if (Math.abs(xVelocity) > mMinFlingVelocity) {
+        if (Math.abs(xVelocity) > minFlingVelocity) {
             mScroller.fling(0, 0, xVelocity.toInt(), 0, Integer.MIN_VALUE, Integer.MAX_VALUE, 0, 0)
         }
     }
