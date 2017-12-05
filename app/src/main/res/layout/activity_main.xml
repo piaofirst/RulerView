@@ -39,7 +39,25 @@
         app:perValue="1.0"
         app:textColor="#0000ff"
         app:lineIndicateColor="#00ff00"
-        app:lineIndicateCoordinate="8dp"
+        app:lineIndicateHeight="30dp"
+        />
+
+    <com.piaofirst.ruler.RulerView
+        android:id="@+id/rulerView3"
+        android:layout_width="match_parent"
+        android:layout_height="58dp"
+        android:layout_marginTop="10dp"
+        android:layout_gravity="center"
+        app:minValue="100.0"
+        app:maxValue="700.0"
+        app:selectorValue="400.0"
+        app:perValue="1.0"
+        app:textColor="#0000ff"
+        app:lineMinHeight="15dp"
+        app:lineMidHeight="25dp"
+        app:lineMaxHeight="35dp"
+        app:lineIndicateColor="#00ff00"
+        app:lineIndicateHeight="35dp"
         />
 
 </LinearLayout>

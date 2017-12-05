@@ -19,6 +19,11 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
 
     private var mScroller = Scroller(context)
     private var mVelocityTracker: VelocityTracker
+    var isTextOnTop = false
+        set(value) {
+            field = value
+            invalidate()
+        }
 
     var minFlingVelocity = 50 // 一个fling最小的速度，单位是每秒多少像素
         set(value) {
@@ -43,16 +48,17 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
             field = value
             invalidate()
         }
-    var mineIndicateColor = Color.BLUE // 刻度的颜色
+    var mineIndicateColor = Color.BLUE // 指示线的颜色
         set(value) {
             field = value
             invalidate()
         }
-    var lineIndicateCoordinate = 10f     //改变指示线的高度,数值越大高度越小
+    var lineIndicateHeight = 100f     //指示线的高度
         set(value) {
             field = value
             invalidate()
         }
+
     var lineSpaceWidth = 25f //尺子刻度两条线之间的距离
         set(value) {
             field = value
@@ -68,6 +74,7 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
             field = value
             invalidate()
         }
+
     var lineMidHeight = 60f //尺子刻度分为3中不同的高度。lineMidHeight  表示中间的高度(也就是 5  15 25 等时的高度)
         set(value) {
             field = value
@@ -115,7 +122,7 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
 
         lineColor = typedArray.getColor(R.styleable.RulerView_lineColor, lineColor)
         mineIndicateColor = typedArray.getColor(R.styleable.RulerView_lineIndicateColor, mineIndicateColor)
-        lineIndicateCoordinate = typedArray.getDimension(R.styleable.RulerView_lineIndicateCoordinate, lineIndicateCoordinate)
+        lineIndicateHeight = typedArray.getDimension(R.styleable.RulerView_lineIndicateHeight, lineIndicateHeight)
         lineSpaceWidth = typedArray.getDimension(R.styleable.RulerView_lineSpaceWidth, lineSpaceWidth)
         lineWidth = typedArray.getDimension(R.styleable.RulerView_lineWidth, lineWidth)
         lineMaxHeight = typedArray.getDimension(R.styleable.RulerView_lineMaxHeight, lineMaxHeight)
@@ -199,8 +206,14 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         mLinePaint = Paint(Paint.ANTI_ALIAS_FLAG)
         mLinePaint.strokeWidth = lineWidth
         mLinePaint.color = mineIndicateColor
-//        canvas?.drawLine((mWidth / 2).toFloat(), mHeight.toFloat(), (mWidth / 2).toFloat(), lineIndicateCoordinate, mLinePaint)
-        canvas?.drawLine((mWidth / 2).toFloat(), lineMaxHeight + textMarginTop * 2 + mTextHeight, (mWidth / 2).toFloat(), lineIndicateCoordinate, mLinePaint)
+//        canvas?.drawLine((mWidth / 2).toFloat(), mHeight.toFloat(), (mWidth / 2).toFloat(), lineIndicateHeight, mLinePaint)
+        if (isTextOnTop) {
+            canvas?.drawLine((mWidth / 2).toFloat(), mHeight.toFloat(),
+                    (mWidth / 2).toFloat(), mHeight - lineIndicateHeight, mLinePaint)
+        } else {
+            canvas?.drawLine((mWidth / 2).toFloat(), 0.0f,
+                    (mWidth / 2).toFloat(), lineIndicateHeight, mLinePaint)
+        }
     }
 
     /**
@@ -216,6 +229,11 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         var alpha = 0
         var scale: Float
         var srcPointX = mWidth / 2
+        if (isTextOnTop) {
+            canvas?.drawLine(0f, mHeight.toFloat(), mWidth.toFloat(), mHeight.toFloat(), mLinePaint)
+        } else {
+            canvas?.drawLine(0f, 0f, mWidth.toFloat(), 0f, mLinePaint)
+        }
         for (i in 0 until mTotalLine) {
             left = srcPointX + mOffset + i * lineSpaceWidth
             //先画默认值在正中间，左右各一半的view。多余部分暂时不画(也就是从默认值在中间，画旁边左右的刻度线)
@@ -234,7 +252,11 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
                 alpha = (255 * scale * scale).toInt()
                 mLinePaint.alpha = alpha
             }
-            canvas?.drawLine(left, 0f, left, height, mLinePaint)
+            if (isTextOnTop) {
+                canvas?.drawLine(left, mHeight.toFloat(), left, mHeight - height, mLinePaint)
+            } else {
+                canvas?.drawLine(left, 0f, left, height, mLinePaint)
+            }
             // 数值为10的倍数是 画数值
             if (i % 10 == 0) {
 //                value = (minValue + i * perValue / 10).toInt().toString()
@@ -242,8 +264,13 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
                 if (alphaEnable) {
                     mTextPaint.alpha = alpha
                 }
-                canvas?.drawText(value, left - mTextPaint.measureText(value) / 2,
-                        height + textMarginTop + mTextHeight, mTextPaint)
+                if (isTextOnTop) {
+                    canvas?.drawText(value, left - mTextPaint.measureText(value) / 2,
+                            mHeight - height - textMarginTop, mTextPaint)
+                } else {
+                    canvas?.drawText(value, left - mTextPaint.measureText(value) / 2,
+                            height + textMarginTop + mTextHeight, mTextPaint)
+                }
             }
         }
     }

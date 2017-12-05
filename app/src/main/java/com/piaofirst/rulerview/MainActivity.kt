@@ -15,6 +15,7 @@ class MainActivity : AppCompatActivity() {
         rulerView.mineIndicateColor = Color.RED
         rulerView.textColor = Color.BLUE
         rulerView.lineMaxHeight = 80f
+        rulerView.lineIndicateHeight = 80f
         rulerView.setOnValueChangedListener(object : RulerView.OnValueChangedListener {
             override fun onValueChanged(value: Float) {
                 text.text = value.toString()
@@ -26,5 +27,7 @@ class MainActivity : AppCompatActivity() {
             }
 
         })
+
+        rulerView3.isTextOnTop = true
     }
 }
