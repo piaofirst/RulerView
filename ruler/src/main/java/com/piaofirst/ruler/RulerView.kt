@@ -48,7 +48,7 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
             field = value
             invalidate()
         }
-    var mineIndicateColor = Color.BLUE // 指示线的颜色
+    var lineIndicateColor = Color.BLUE // 指示线的颜色
         set(value) {
             field = value
             invalidate()
@@ -121,7 +121,7 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         textSize = typedArray.getDimension(R.styleable.RulerView_textSize, textSize)
 
         lineColor = typedArray.getColor(R.styleable.RulerView_lineColor, lineColor)
-        mineIndicateColor = typedArray.getColor(R.styleable.RulerView_lineIndicateColor, mineIndicateColor)
+        lineIndicateColor = typedArray.getColor(R.styleable.RulerView_lineIndicateColor, lineIndicateColor)
         lineIndicateHeight = typedArray.getDimension(R.styleable.RulerView_lineIndicateHeight, lineIndicateHeight)
         lineSpaceWidth = typedArray.getDimension(R.styleable.RulerView_lineSpaceWidth, lineSpaceWidth)
         lineWidth = typedArray.getDimension(R.styleable.RulerView_lineWidth, lineWidth)
@@ -205,7 +205,7 @@ class RulerView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
     private fun drawLineIndicate(canvas: Canvas?) {
         mLinePaint = Paint(Paint.ANTI_ALIAS_FLAG)
         mLinePaint.strokeWidth = lineWidth
-        mLinePaint.color = mineIndicateColor
+        mLinePaint.color = lineIndicateColor
 //        canvas?.drawLine((mWidth / 2).toFloat(), mHeight.toFloat(), (mWidth / 2).toFloat(), lineIndicateHeight, mLinePaint)
         if (isTextOnTop) {
             canvas?.drawLine((mWidth / 2).toFloat(), mHeight.toFloat(),

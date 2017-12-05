@@ -12,7 +12,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         rulerView.setValue(250F, 0f , 500f, 1f)
-        rulerView.mineIndicateColor = Color.RED
+        rulerView.lineIndicateColor = Color.RED
         rulerView.textColor = Color.BLUE
         rulerView.lineMaxHeight = 80f
         rulerView.lineIndicateHeight = 80f
